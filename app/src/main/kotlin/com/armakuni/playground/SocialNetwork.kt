@@ -7,11 +7,15 @@ data class Message(val message: String)
 
 data class UserName(val name: String)
 
-class User(val name: String) {
+class User(val name: UserName) {
     private var messages: List<Message> = listOf()
 
     fun postMessage(message: Message) {
         messages += message
+    }
+
+    fun getMessages(): List<Message> {
+        return messages
     }
 }
 
@@ -20,9 +24,22 @@ class User(val name: String) {
 class SocialNetwork {
     private var messages: MutableMap<UserName, List<Message>> = mutableMapOf()
     private var userSubscriptions: MutableMap<UserName, Set<UserName>> = mutableMapOf()
+    private var users: MutableMap<UserName, User> = mutableMapOf()
 
-    fun postMessage(user: UserName, message: Message) = messages.compute(user) { _, userMessages -> userMessages.orEmpty() + message }
-    fun getUserTimelineMessages(user: UserName): List<Message> = messages[user].orEmpty()
+    fun postMessage(userName: UserName, message: Message) {
+        if (userName !in users) {
+            users[userName] = User(userName)
+        }
+
+        users[userName]?.postMessage(message)
+        messages.compute(userName) { _, userMessages -> userMessages.orEmpty() + message }
+    }
+
+    fun getUserTimelineMessagesOld(user: UserName): List<Message> = messages[user].orEmpty()
+
+    fun getUserTimelineMessages(userName: UserName): List<Message> {
+        return users[userName]?.getMessages().orEmpty()
+    }
 
     fun subscribeUser(userSubscribing: UserName, userSubscribingTo: UserName) {
         userSubscriptions.compute(userSubscribing) { _, usersExistingSubscriptions -> usersExistingSubscriptions.orEmpty() + userSubscribingTo }
