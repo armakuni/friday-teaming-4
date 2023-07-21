@@ -10,17 +10,17 @@ class SocialNetworkTest {
     @Test fun `a gets an empty list when they have not posted an messages`() {
         val socialNetwork = SocialNetwork()
 
-        val timeline = socialNetwork.getUserTimelineMessages(User("Alice"))
+        val timeline = socialNetwork.getUserTimelineMessages(UserName("Alice"))
 
         assertEquals(listOf(), timeline)
     }
 
-    @Test fun `a user can get their timeline`() {
+    @Test fun `a user can see messages they've posted to their timeline`() {
         val socialNetwork = SocialNetwork()
 
-        socialNetwork.postMessage(User("Alice"), Message("hello"))
+        socialNetwork.postMessage(UserName("Alice"), Message("hello"))
 
-        val timeline = socialNetwork.getUserTimelineMessages(User("Alice"))
+        val timeline = socialNetwork.getUserTimelineMessages(UserName("Alice"))
 
         assertEquals(listOf(Message("hello")), timeline)
     }
@@ -28,25 +28,46 @@ class SocialNetworkTest {
     @Test fun `a user can get a multiple messages from their timeline`() {
         val socialNetwork = SocialNetwork()
 
-        socialNetwork.postMessage(User("Alice"), Message("hello, for the first time"))
-        socialNetwork.postMessage(User("Alice"), Message("hello, again"))
+        socialNetwork.postMessage(UserName("Alice"), Message("hello, for the first time"))
+        socialNetwork.postMessage(UserName("Alice"), Message("hello, again"))
 
-        val timeline = socialNetwork.getUserTimelineMessages(User("Alice"))
+        val timeline = socialNetwork.getUserTimelineMessages(UserName("Alice"))
 
         assertEquals(listOf(Message("hello, for the first time"), Message("hello, again")), timeline)
     }
 
     @Test fun `users can only see messages from themselves in their timeline`() {
         val socialNetwork = SocialNetwork()
+        val alicesMessage = Message("hello, for the first time")
+        val bobsMessage = Message("hello, again")
 
-        socialNetwork.postMessage(User("Alice"), Message("hello, for the first time"))
-        socialNetwork.postMessage(User("Bob"), Message("hello, again"))
+        socialNetwork.postMessage(UserName("Alice"), alicesMessage)
+        socialNetwork.postMessage(UserName("Bob"), bobsMessage)
 
-        val alicesTimeline = socialNetwork.getUserTimelineMessages(User("Alice"))
-        val bobsTimeline = socialNetwork.getUserTimelineMessages(User("Bob"))
+        val alicesTimeline = socialNetwork.getUserTimelineMessages(UserName("Alice"))
+        val bobsTimeline = socialNetwork.getUserTimelineMessages(UserName("Bob"))
 
-        assertEquals(listOf(Message("hello, for the first time")), alicesTimeline)
-        assertEquals(listOf(Message("hello, again")), bobsTimeline)
+        val alicesExpectedTimeline = listOf(alicesMessage)
+        val bobsExpectedTimeline = listOf(bobsMessage)
+
+        assertEquals(alicesExpectedTimeline, alicesTimeline)
+        assertEquals(bobsExpectedTimeline, bobsTimeline)
+    }
+
+    @Test fun `a user can get messages of all the users they have subscribed to`() {
+        val socialNetwork = SocialNetwork()
+
+        socialNetwork.subscribeUser(UserName("Charlie"), UserName("Alice"))
+        socialNetwork.subscribeUser(UserName("Charlie"), UserName("Bob"))
+
+        val alicesMessage = Message("hello, for the first time")
+        socialNetwork.postMessage(UserName("Alice"), alicesMessage)
+        val bobsMessage = Message("hello, for the second time")
+        socialNetwork.postMessage(UserName("Bob"), bobsMessage)
+
+        val charliesSubscriptionMessages = socialNetwork.getSubscriptionMessagesForUser(UserName("Charlie"))
+
+        assertEquals(listOf(alicesMessage, bobsMessage), charliesSubscriptionMessages)
     }
 }
 

@@ -5,10 +5,36 @@ package com.armakuni.playground
 
 data class Message(val message: String)
 
-data class User(val name: String)
+data class UserName(val name: String)
+
+class User(val name: String) {
+    private var messages: List<Message> = listOf()
+
+    fun postMessage(message: Message) {
+        messages += message
+    }
+}
+
+
 
 class SocialNetwork {
-    private var messages: MutableMap<User, List<Message>> = mutableMapOf()
-    fun postMessage(user: User, message: Message) = messages.compute(user) { _, userMessages -> userMessages.orEmpty() + message }
-    fun getUserTimelineMessages(user: User): List<Message> = messages[user].orEmpty()
+    private var messages: MutableMap<UserName, List<Message>> = mutableMapOf()
+    private var userSubscriptions: MutableMap<UserName, Set<UserName>> = mutableMapOf()
+
+    fun postMessage(user: UserName, message: Message) = messages.compute(user) { _, userMessages -> userMessages.orEmpty() + message }
+    fun getUserTimelineMessages(user: UserName): List<Message> = messages[user].orEmpty()
+
+    fun subscribeUser(userSubscribing: UserName, userSubscribingTo: UserName) {
+        userSubscriptions.compute(userSubscribing) { _, usersExistingSubscriptions -> usersExistingSubscriptions.orEmpty() + userSubscribingTo }
+    }
+
+    fun getSubscriptionMessagesForUser(user: UserName): List<Message> {
+        val usersExistingSubscriptions = userSubscriptions[user]
+
+        val usersSubscriptionMessages = mutableListOf<Message>()
+        for (user in usersExistingSubscriptions.orEmpty().iterator()) {
+            usersSubscriptionMessages += messages[user].orEmpty()
+        }
+        return usersSubscriptionMessages
+    }
 }
